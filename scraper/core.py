@@ -10,7 +10,12 @@ This module provides the main AutoScraper class that handles:
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from .platforms import scrape_woocommerce, scrape_shopify
+from .platforms import (
+    scrape_woocommerce,
+    scrape_shopify,
+    scrape_shopify_products_json,
+    scrape_microdata,
+)
 from .utils import (
     find_repeating_containers,
     extract_data_from_containers,
@@ -270,9 +275,18 @@ class AutoScraper:
                 if result:
                     return result
             elif self.platform == "shopify":
+                result = scrape_shopify_products_json(self)
+                if result:
+                    return result
                 result = scrape_shopify(self)
                 if result:
                     return result
+
+        # schema.org Product microdata works on any platform
+        if not force_generic:
+            result = scrape_microdata(self)
+            if result:
+                return result
 
         # Fall back to generic container detection
         candidates = find_repeating_containers(self)

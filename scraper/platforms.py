@@ -149,3 +149,125 @@ def scrape_shopify(scraper):
         "count": len(products),
         "data": scraper.clean_data,
     }
+
+
+def scrape_shopify_products_json(scraper, limit=250, max_pages=8):
+    """Pull the catalogue from the storefront's own /products.json.
+
+    Every Shopify storefront serves it unless the merchant disabled it,
+    and one request replaces the whole HTML-card parse. Returns None when
+    the endpoint is missing or empty so the HTML route can take over.
+    """
+    import json
+    from urllib.parse import urlsplit
+
+    import requests
+
+    parts = urlsplit(scraper.url)
+    base = f"{parts.scheme}://{parts.netloc}"
+    items = []
+    for page in range(1, max_pages + 1):
+        try:
+            resp = requests.get(
+                f"{base}/products.json",
+                params={"limit": limit, "page": page},
+                headers={"User-Agent": scraper.scrape_config.get("user_agent", "Mozilla/5.0")
+                         if isinstance(getattr(scraper, "scrape_config", None), dict) else "Mozilla/5.0"},
+                timeout=20,
+            )
+        except requests.RequestException:
+            return None
+        if resp.status_code != 200:
+            return None
+        try:
+            batch = resp.json().get("products", [])
+        except (ValueError, json.JSONDecodeError):
+            return None
+        if not batch:
+            break
+        for prod in batch:
+            variant = (prod.get("variants") or [{}])[0]
+            image = (prod.get("images") or [{}])[0]
+            data = {
+                "title": prod.get("title"),
+                "url": f"{base}/products/{prod.get('handle')}" if prod.get("handle") else None,
+                "price": variant.get("price"),
+                "sku": variant.get("sku") or None,
+                "vendor": prod.get("vendor") or None,
+                "image": image.get("src") if isinstance(image, dict) else None,
+                "available": variant.get("available"),
+            }
+            items.append({k: v for k, v in data.items() if v not in (None, "")})
+        if len(batch) < limit:
+            break
+    if not items:
+        return None
+
+    scraper.raw_data = items
+    scraper.clean_data = items
+    return {
+        "platform": "shopify",
+        "source": "products.json",
+        "count": len(items),
+        "data": items,
+    }
+
+
+def scrape_microdata(scraper):
+    """Extract schema.org Product microdata, the platform-agnostic route.
+
+    Any theme that marks its cards with itemtype=schema.org/Product gets
+    parsed here without a single site-specific selector. Returns None when
+    the page carries no Product microdata.
+    """
+    soup = scraper.soup
+    url = scraper.url
+
+    cards = soup.find_all(attrs={"itemtype": lambda v: v and "schema.org/Product" in v})
+    if not cards:
+        return None
+
+    scraper.raw_data = []
+    for card in cards:
+        data = {}
+
+        name = card.find(attrs={"itemprop": "name"})
+        if name:
+            data["title"] = name.get("content") or name.get_text(strip=True)
+
+        link = card.find(attrs={"itemprop": "url"}) or card.find("a", href=True)
+        if link:
+            href = link.get("href") or link.get("content")
+            if href:
+                data["url"] = urljoin(url, href)
+
+        price = card.find(attrs={"itemprop": "price"})
+        if price:
+            data["price"] = price.get("content") or price.get_text(strip=True)
+
+        currency = card.find(attrs={"itemprop": "priceCurrency"})
+        if currency:
+            data["currency"] = currency.get("content") or currency.get_text(strip=True)
+
+        image = card.find(attrs={"itemprop": "image"})
+        if image:
+            src = image.get("src") or image.get("content")
+            if src:
+                data["image"] = urljoin(url, src)
+
+        sku = card.find(attrs={"itemprop": "sku"})
+        if sku:
+            data["sku"] = sku.get("content") or sku.get_text(strip=True)
+
+        if data:
+            scraper.raw_data.append(data)
+
+    if not scraper.raw_data:
+        return None
+
+    scraper.clean_data = scraper.raw_data
+    return {
+        "platform": "microdata",
+        "count": len(scraper.raw_data),
+        "data": scraper.clean_data,
+    }

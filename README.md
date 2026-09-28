@@ -1,9 +1,8 @@
-![Python](https://img.shields.io/badge/python-3.11+-blue)
-![HasData](https://img.shields.io/badge/powered%20by-HasData-orange)
-
 # Auto E-commerce Scraper
 
-[![HasData_bannner](media/banner.png)](https://hasdata.com/)
+![Python 3.11 or newer badge](https://img.shields.io/badge/python-3.11+-blue) ![Powered by HasData badge](https://img.shields.io/badge/powered%20by-HasData-orange)
+
+[![HasData, the web scraping API behind the optional rendering](media/banner.png)](https://hasdata.com/)
 
 A universal web scraper for e-commerce sites with automatic platform detection and intelligent data extraction.
 
@@ -40,7 +39,7 @@ A universal web scraper for e-commerce sites with automatic platform detection a
 
 ## Features
 
-![Demo](media/demo.png)
+![Streamlit interface of the scraper with a URL field, platform badge and extracted product table](media/demo.png)
 
 -  **Intelligent Container Detection** - Finds repeating product cards without configuration
 -  **HasData API Integration** - Optional API support for JavaScript rendering and advanced features
@@ -49,6 +48,8 @@ A universal web scraper for e-commerce sites with automatic platform detection a
 -  **User-Friendly Interface** - Built with Streamlit for easy interaction
 
 ##  Architecture
+
+One entry point, one package, no framework beyond Streamlit.
 
 ```
 .
@@ -62,7 +63,11 @@ A universal web scraper for e-commerce sites with automatic platform detection a
     └── export.py          # Data export functionality
 ```
 
+The `scraper` package works standalone, `app.py` only adds the UI.
+
 ## 📦 Installation
+
+Clone the repository and install the dependencies.
 
 ```bash
 # Clone the repository
@@ -73,7 +78,11 @@ cd auto-ecommerce-scraper
 pip install -r requirements.txt
 ```
 
+No build step follows, the app runs from source.
+
 ### Requirements
+
+The list in `requirements.txt` is the whole footprint.
 
 ```txt
 streamlit>=1.30.0
@@ -83,9 +92,15 @@ requests>=2.31.0
 openpyxl>=3.1.0
 ```
 
+Python 3.11 or newer.
+
 ##  Usage
 
+The tool runs as a local Streamlit app.
+
 ### Basic Usage
+
+Start the app and open the printed local URL.
 
 ```bash
 streamlit run app.py
@@ -112,12 +127,13 @@ For JavaScript-heavy sites or AI extraction:
 
 ##  How It Works
 
+Each stage hands over to a fallback when it comes up empty.
+
 ### 1. Platform Detection
 
-The scraper automatically identifies the platform:
-- **WooCommerce** - Looks for `woocommerce`, `product_type_`, etc.
-- **Shopify** - Detects `shopify`, `product-card`, etc.
-- **Generic** - Falls back to container detection
+The scraper identifies the platform from the page source. WooCommerce shows itself through `woocommerce` and `product_type_` class prefixes, Shopify through its asset host and `product-card` markup, and everything else goes down the generic route.
+
+For Shopify the scraper asks the storefront's own `/products.json` before touching the HTML, and for any platform it tries schema.org Product microdata before falling back to container detection.
 
 ### 2. Container Detection (Generic Mode)
 
@@ -149,7 +165,11 @@ Extracts:
 
 ## API Reference
 
+The package is importable outside the UI.
+
 ### AutoScraper Class
+
+The class carries the whole pipeline.
 
 ```python
 from scraper.core import AutoScraper
@@ -176,21 +196,40 @@ print(result['platform'])   # 'woocommerce', 'shopify', or 'generic'
 print(result['data'])       # List of extracted items
 ```
 
+The result dict names the platform it detected.
+
 ### Platform-Specific Scrapers
 
-```python
-from scraper.platforms import scrape_woocommerce, scrape_shopify
+Each route is callable on its own.
 
-# For WooCommerce sites
+```python
+from scraper.platforms import (
+    scrape_woocommerce,
+    scrape_shopify,
+    scrape_shopify_products_json,
+    scrape_microdata,
+)
+
+# WooCommerce card parsing
 result = scrape_woocommerce(scraper)
 
-# For Shopify sites
-result = scrape_shopify(scraper)
+# Shopify: the storefront's own /products.json first, HTML cards second
+result = scrape_shopify_products_json(scraper)
+result = result or scrape_shopify(scraper)
+
+# schema.org Product microdata, works on any platform that marks its cards
+result = scrape_microdata(scraper)
 ```
+
+On a Shopify store the JSON route replaces the whole card parse. One paginated request returns title, handle, price, SKU, vendor and image per product, verified on two live stores at 50 of 50 products each. Microdata runs before the generic container fallback, so a marked-up theme parses with zero site-specific selectors.
 
 ##  Examples
 
+The two snippets below match the two ways people run the tool.
+
 ### Scraping a WooCommerce Store
+
+The minimal run needs only a URL.
 
 ```python
 scraper = AutoScraper("https://scrapeme.live/shop/")
@@ -213,7 +252,11 @@ result = scraper.scrape()
 # }
 ```
 
+The platform parser picks the fields, no schema needed.
+
 ### Using AI Extraction
+
+AI rules trade credits for structure on messy layouts.
 
 ```python
 from scraper.core import UNIVERSAL_PRODUCT_RULES
@@ -231,6 +274,8 @@ result = scraper.scrape()
 ai_data = scraper.get_hasdata_extras()['aiResponse']
 ```
 
+The AI rules return one structured object per detected product.
+
 ## Tested Sites
 
 - ✅ WooCommerce stores
@@ -242,7 +287,11 @@ ai_data = scraper.get_hasdata_extras()['aiResponse']
 
 ##  Configuration
 
+Everything below passes through to the HasData request.
+
 ### Scraping Options
+
+The table lists what the UI exposes.
 
 | Option | Description | Default |
 |--------|-------------|---------|
@@ -254,6 +303,8 @@ ai_data = scraper.get_hasdata_extras()['aiResponse']
 | `blockAds` | Block advertisements | `true` |
 | `proxyType` | Proxy type (datacenter/residential/mobile) | `datacenter` |
 | `proxyCountry` | Proxy country code | `US` |
+
+Unset options keep the API defaults.
 
 ### AI Extraction Rules
 
@@ -273,12 +324,12 @@ custom_rules = {
 }
 ```
 
+Any JSON schema in this shape works as a rule set.
+
 ## 🔗 Links
 
-- [How to Scrape E-Commerce in 2026](https://hasdata.com/blog/web-scraping-in-e-commerce)
+- [E-Commerce Web Scraping Guide](https://hasdata.com/blog/ecommerce-web-scraping-guide)
 - [HasData API Documentation](https://docs.hasdata.com/introduction)
-- [Streamlit Documentation](https://docs.streamlit.io)
-- [BeautifulSoup Documentation](https://www.crummy.com/software/BeautifulSoup/bs4/doc/)
 
 ## Disclaimer
 
@@ -286,17 +337,19 @@ This tool is for **educational purposes** only. Learn more about [the legality o
 
 ## Troubleshooting
 
+Three failure shapes account for nearly every report.
+
 ### Common Issues
 
 **"Could not find repeating structures"**
 - Try checking "Use generic method"
-- Ensure the page has multiple similar items
+- The page needs several similar items for detection to lock on
 - Try with HasData API for JS-rendered content
 
 **"API Error"**
 - Verify your HasData API key
 - Check your API quota
-- Ensure the URL is accessible
+- Check the URL opens in a normal browser first
 
 **Empty or incomplete data**
 - Select a different container group
