@@ -8,13 +8,13 @@ def render_sidebar():
         """
         <style>
             .css-1lcbmhc.e1fqkh3o0 {
-                width: 300px !important;  /* Устанавливаем фиксированную ширину */
+                width: 300px !important;  /* Fixed sidebar width */
             }
             .css-1lcbmhc.e1fqkh3o0 .stTextInput,
             .css-1lcbmhc.e1fqkh3o0 .stCheckbox,
             .css-1lcbmhc.e1fqkh3o0 .stSelectbox,
             .css-1lcbmhc.e1fqkh3o0 .stButton {
-                width: 100% !important;  /* Элементы занимают всю ширину sidebar */
+                width: 100% !important;  /* Inputs fill the sidebar width */
             }
         </style>
         """,
