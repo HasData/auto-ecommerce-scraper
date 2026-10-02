@@ -2,7 +2,7 @@
 
 ![Python 3.11 or newer badge](https://img.shields.io/badge/python-3.11+-blue) ![Powered by HasData badge](https://img.shields.io/badge/powered%20by-HasData-orange)
 
-[![HasData, the web scraping API behind the optional rendering](media/banner.png)](https://hasdata.com/)
+[![HasData, the web scraping API behind the optional rendering](media/banner.png)](https://hasdata.com/?utm_source=github&utm_medium=syndication&utm_campaign=ecommerce-web-scraping-guide&utm_content=auto-ecommerce-scraper-readme)
 
 A universal web scraper for e-commerce sites with automatic platform detection and intelligent data extraction.
 
@@ -328,12 +328,12 @@ Any JSON schema in this shape works as a rule set.
 
 ## 🔗 Links
 
-- [E-Commerce Web Scraping Guide](https://hasdata.com/blog/ecommerce-web-scraping-guide)
-- [HasData API Documentation](https://docs.hasdata.com/introduction)
+- [E-Commerce Web Scraping Guide](https://hasdata.com/blog/ecommerce-web-scraping-guide?utm_source=github&utm_medium=syndication&utm_campaign=ecommerce-web-scraping-guide&utm_content=auto-ecommerce-scraper-readme)
+- [HasData API Documentation](https://docs.hasdata.com/introduction?utm_source=github&utm_medium=syndication&utm_campaign=ecommerce-web-scraping-guide&utm_content=auto-ecommerce-scraper-readme)
 
 ## Disclaimer
 
-This tool is for **educational purposes** only. Learn more about [the legality of web scraping](https://hasdata.com/blog/is-web-scraping-legal).
+This tool is for **educational purposes** only. Learn more about [the legality of web scraping](https://hasdata.com/blog/is-web-scraping-legal?utm_source=github&utm_medium=syndication&utm_campaign=ecommerce-web-scraping-guide&utm_content=auto-ecommerce-scraper-readme).
 
 ## Troubleshooting
 
